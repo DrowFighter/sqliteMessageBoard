@@ -1,0 +1,248 @@
+<html lang="en">
+
+<head>
+  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <nav class="navbar">
+    <a href="./index.html" id="link-index">Homepage</a>
+    <a href="./books.html" id="link-books">books</a>
+    <a href="./loans.html" id="link-loans" class='active'>Loans</a>
+    <a href="./customers.html" id="link-customers">Customers</a>   
+  </nav>
+  <hr>
+  <h2>add a new loan</h2>
+  <div class="horizontal_form">
+    <label for="Name">customer name:</label><br />
+    <input type="number" id="loanDate" name="loanDate" /><br />
+    <label for="loanName "> loan title:</label><br />
+    <input type="text" id="returnDate" name="returnDate" /><br />
+    <input id type="submit" value="Submit" onclick="submit_loan()" />
+  </div>
+  <hr>
+  <h2>search for all loans or late loans ?</h2>
+  <div class="horizontal_form">
+    <form action='#'>
+      <input type='hidden' name='searchInput' value='' />
+      <button type="submit"> display all loans </button>
+    </form>
+    <form action='#'>
+      <input type='hidden' name='searchInput' value='display-late' />
+      <button type="submit"> display late loans </button>
+    </form>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <td>custID</td>
+        <td>loanID</td>
+        <td>loanDate</td>
+        <td>returnDate</td>
+      </tr>
+    </thead>
+    <tbody>
+
+    </tbody>
+  </table>
+  <script>
+    //immitates loans table response from server, for now
+    let itemsList = [
+      // {
+      //   custID: "id123",
+      //   loanID: "id123",                
+      //   loanDate: "2022/12/10",
+      //   returnDate: "2022/12/15",
+      // },
+      // {
+      //   custID: "id124",
+      //   loanID: "id124",                
+      //   loanDate: "2022/12/17",
+      //   returnDate: "2022/12/22",
+      // },
+      // {
+      //   custID: "id125",
+      //   loanID: "id125",                
+      //   loanDate: "2022/12/22",
+      //   returnDate: "2022/12/27",
+      // },
+    ];
+
+    const searchParams = new URLSearchParams(window.location.search);
+    const searchQuery = searchParams.get('searchInput');
+
+    const padTo2Digits = (num) => {
+      return num.toString().padStart(2, '0');
+    }
+
+    const formatDate = (date) => {
+      return [
+        date.getFullYear(),
+        padTo2Digits(date.getMonth() + 1),
+        padTo2Digits(date.getDate()),
+      ].join('');
+    }
+
+    const currentDate = formatDate(new Date());
+
+    const serverUrl = new URL("http://localhost:5000");
+
+    function render_list() {
+      //reset list to be empty
+      document.querySelector("tbody").innerHTML = "";
+
+      //go over the saved list and render it
+      itemsList.map(loan => {
+        if (!searchQuery || loan.loanName.includes(searchQuery) || loan.author.includes(searchQuery)) return loan;
+      }).forEach(loan => {
+        if (!loan) return;
+        // translates each loan to an html table row with each value in a cell
+
+        const row = document.createElement("tr");
+
+        const cell1 = document.createElement("td");
+        cell1.textContent = loan.custID;
+        row.appendChild(cell1);
+
+        const cell2 = document.createElement("td");
+        cell2.textContent = loan.loanID;
+        row.appendChild(cell2);
+
+        const cell3 = document.createElement("td");
+        cell3.textContent = loan.loanDate;
+        row.appendChild(cell3);
+
+        const cell4 = document.createElement("td");
+        cell4.textContent = loan.returnDate;
+        row.appendChild(cell4);
+
+        //set the delete button to call the delete_loan function with the loan's id
+        const cell5 = document.createElement("td");
+        cell5.innerHTML = ` <button type="button" onclick="delete_loan('${loan.id}')">Remove loan</button>`;
+        row.appendChild(cell5);
+
+        document.querySelector("tbody").appendChild(row);
+      });
+    }
+
+    //deletes a loan from the db and then updates the list
+    async function delete_loan(loan_id) {
+      try {
+        alert('the loan id: ${loan_id} will be removed');
+
+        //go over all the loans in the list
+        for (let i = 0; i < itemsList.length; i++) {
+          let currentloan = itemsList[i];
+          if (currentloan.id == loan_id) {
+
+            //build request string to send to server
+            let requestString = serverUrl + '/delete?' + new URLSearchParams({
+              id: loan_id,
+              callType: "loans"
+            })
+
+            //send the request to the server
+            let response = await fetch(requestString, {
+              credentials: 'include'
+            })
+            console.log(response);
+
+            //if successfull -> remove the loan from the list
+            itemsList.splice(i, 1)
+            continue;
+          }
+        }
+
+        render_list();
+
+      } catch (err) {
+        console.log(err);
+        alert(err);
+      }
+    }
+
+    //TODO: fix!!!
+    //adds a loan to the db and then updates the list
+    async function submit_loan() {
+      try {
+
+        //save dom elements of the inputs
+        let loanDate = document.getElementById("loanDate");
+        let returnDate = document.getElementById("returnDate");
+
+        //save the values of the inputs
+        let loanDateValue = loanDate.value;
+        let returnDateValue = returnDate.value;
+
+        //exists function if missing input
+        if (!loanDateValue || !returnDateValue ) return;
+
+        //build request string to send to server
+        let requestString = serverUrl + '/add?' + new URLSearchParams({
+          loanDate: loanDateValue,
+          returnDate: returnDateValue,
+          callType: "loans"
+        })
+
+        //send the request to the server
+        let response = await fetch(requestString, {
+          credentials: 'include'
+        })
+        console.log(response);
+
+        //if successfull -> add the loan to the list on the screen
+        itemsList.push({
+          id: Math.random(),
+          custID: "fix",
+          loanID: "fix",
+          loanDate: loanDateValue,
+          returnDate: returnDateValue,
+        })
+      
+        //reset the values
+        loanDate.value = "";
+        returnDate.value = "";
+
+        render_list();
+
+      } catch (err) {
+        console.log(err);
+        alert(err);
+      }
+    }
+
+    //retrieves the loans from the db and updates the list
+    async function get_all_loans() {
+      try {
+
+        //build request string to send to server
+        let requestString = serverUrl + '/getAll?' + new URLSearchParams({
+          callType: "loans"
+        })
+
+        //send the request to the server
+        let response = await fetch(requestString, {
+          credentials: 'include'
+        })
+        console.log(response);
+
+        //if successfull -> add the loan to the list on the screen
+        if (response) itemsList = response;
+
+        render_list();
+
+      } catch (err) {
+        console.log(err);
+        alert(err);
+      }
+    }
+
+    get_all_loans();
+
+  </script>
+
+</body>
+
+</html>

@@ -1,0 +1,245 @@
+<html lang="en">
+
+<head>
+  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <nav class="navbar">
+    <a href="./index.html" id="link-index">Homepage</a>
+    <a href="./books.html" id="link-books" class='active'>Books</a>
+    <a href="./loans.html" id="link-loans">Loans</a>
+    <a href="./customers.html" id="link-customers">Customers</a>
+    
+  </nav>
+  <hr>
+  <h2>Add a new book</h2>
+  <div class="horizontal_form">
+    <label for="name">Name:</label><br />
+    <input type="text" id="name" name="name" /><br />
+    <label for="author">Author:</label><br />
+    <input type="text" id="author" name="author" /><br />
+    <label for="year">Year Published:</label><br />
+    <input type="number" id="year" name="year" /><br />
+    <label for="type">Type:</label><br />
+    <input type="number" id="type" name="type" min="1" max="3" /><br /><br />
+    <input id type="submit" value="Submit" onclick="submit_book()" />
+
+  </div>
+  <hr>
+  <h2> search for a book</h2>
+  <form action='#'>
+    <input type='text' id='searchInput' name='searchInput' />
+    <button type="submit"> search </button>
+  </form>
+
+  <table>
+
+    <thead>
+      <tr>
+        <td>Book Name</td>
+        <td>author</td>
+        <td>Year Published</td>
+        <td>Type</td>
+      </tr>
+    </thead>
+    <tbody>
+
+    </tbody>
+  </table>
+  <script>
+    //immitates books table response from server, for now
+    let itemsList = [
+    //   {
+    //     id: "id123",
+    //     bookName: "the hobbit",
+    //     author: "tolkien",
+    //     yearPublished: "1954",
+    //     type: "2",
+    //   },
+    //   {
+    //     id: "id124",
+    //     bookName: "hobbit",
+    //     author: "tolkien",
+    //     yearPublished: "1954",
+    //     type: "1",
+    //   },
+    //   {
+    //     id: "id125",
+    //     bookName: "the bobbit",
+    //     author: "tolkien",
+    //     yearPublished: "1954",
+    //     type: "3",
+    //   },
+    ];
+
+    const searchParams = new URLSearchParams(window.location.search);
+    const searchQuery = searchParams.get('searchInput');
+    document.getElementById('searchInput').value = searchQuery;
+    const serverUrl = new URL("http://localhost:5000");
+
+    function render_list() {
+      //reset list to be empty
+      document.querySelector("tbody").innerHTML = "";
+
+      //go over the saved list and render it
+      itemsList.map(book => {
+        if (!searchQuery || book.bookName.includes(searchQuery) || book.author.includes(searchQuery)) return book;
+      }).forEach(book => {
+        if (!book) return;
+        // translates each book to an html table row with each value in a cell
+
+        const row = document.createElement("tr");
+
+        const cell1 = document.createElement("td");
+        cell1.textContent = book.bookName;
+        row.appendChild(cell1);
+
+        const cell2 = document.createElement("td");
+        cell2.textContent = book.author;
+        row.appendChild(cell2);
+
+        const cell3 = document.createElement("td");
+        cell3.textContent = book.yearPublished;
+        row.appendChild(cell3);
+
+        const cell4 = document.createElement("td");
+        cell4.textContent = book.type;
+        row.appendChild(cell4);
+
+        //set the delete button to call the delete_book function with the book's id
+        const cell5 = document.createElement("td");
+        cell5.innerHTML = ` <button type="button" onclick="delete_book('${book.id}')">Remove book</button>`;
+        row.appendChild(cell5);
+
+        document.querySelector("tbody").appendChild(row);
+      });
+    }
+
+    //deletes a book from the db and then updates the list
+    async function delete_book(book_id){
+      try{
+        alert('the book id: ${book_id} will be removed');
+
+        //go over all the books in the list
+        for(let i=0;i<itemsList.length;i++){
+          let currentBook = itemsList[i];
+          if(currentBook.id == book_id){
+
+            //build request string to send to server
+            let requestString = serverUrl + '/delete?' + new URLSearchParams({
+              id: book_id,
+              callType: "books"
+            })
+
+            //send the request to the server
+            let response = await fetch(requestString, {
+              credentials: 'include'
+            })
+            console.log(response);
+
+            //if successfull -> remove the book from the list
+            itemsList.splice(i,1)
+            continue;
+          }
+        }
+
+        render_list();
+
+      }catch(err){
+        console.log(err);
+        alert(err);
+      }
+    }
+
+    //adds a book to the db and then updates the list
+    async function submit_book() {
+      try {
+
+        //save dom elements of the inputs
+        let bookName = document.getElementById("name");
+        let bookAuthor = document.getElementById("author");
+        let bookYear = document.getElementById("year");
+        let bookType = document.getElementById("type");
+
+        //save the values of the inputs
+        let bookNameValue = bookName.value;
+        let bookAuthorValue = bookAuthor.value;
+        let bookYearValue = bookYear.value;
+        let bookTypeValue = bookType.value;
+
+        //exists function if missing input
+        if(!bookNameValue || !bookAuthorValue || !bookYearValue || !bookTypeValue ) return;
+
+        //build request string to send to server
+        let requestString = serverUrl + '/add?' + new URLSearchParams({
+          name: bookNameValue,
+          author: bookAuthorValue,
+          year: bookYearValue,
+          type: bookTypeValue,
+          callType: "books"
+        })
+
+        //send the request to the server
+        let response = await fetch(requestString, {
+          credentials: 'include'
+        })
+        console.log(response);
+
+        //if successfull -> add the book to the list on the screen
+        itemsList.push({
+          id: Math.random(),
+          bookName: bookNameValue,
+          author: bookAuthorValue,
+          yearPublished: bookYearValue,
+          type: bookTypeValue,
+        })
+
+        //reset the values
+        bookName.value = "";
+        bookAuthor.value = "";
+        bookYear.value = "";
+        bookType.value = "";
+
+        render_list();
+
+      } catch (err) {
+        console.log(err);
+        alert(err);
+      }
+    }
+
+    //retrieves the books from the db and updates the list
+    async function get_all_books() {
+      try {
+
+        //build request string to send to server
+        let requestString = serverUrl + '/getAll?' + new URLSearchParams({
+          callType: "books"
+        })
+
+        //send the request to the server
+        let response = await fetch(requestString, {
+          credentials: 'include'
+        })
+        console.log(response);
+
+        //if successfull -> add the book to the list on the screen
+        if (response) itemsList = response;
+
+        render_list();
+      } catch (err) {
+        console.log(err);
+        alert(err);
+      }
+    }
+
+    get_all_books();
+
+  </script>
+
+</body>
+
+</html>

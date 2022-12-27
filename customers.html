@@ -1,0 +1,228 @@
+<html lang="en">
+
+<head>
+  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <nav class="navbar">
+    <a href="./index.html" id="link-index">Homepage</a>
+    <a href="./books.html" id="link-books">Books</a>
+    <a href="./loans.html" id="link-loans">Loans</a>
+    <a href="./customers.html" id="link-customers" class='active'>Customers</a>
+  
+  </nav>
+  <hr>
+  <h2> add a new customer</h2>
+  <div class="horizontal_form">
+    <label for="name">Name:</label><br />
+    <input type="text" id="name" name="name" /><br />
+    <label for="city">city:</label><br />
+    <input type="text" id="city" name="city" /><br />
+    <label for="age">age:</label><br />
+    <input type="number" id="age" name="age" /><br />
+    <input type="submit" value="Submit" />
+    <input id type="submit" value="Submit" onclick="submit_costumer()" />
+
+  </div>
+  <hr>
+  <h2> search for a customer</h2>
+  <form action='#'>
+    <input type='text' id='searchInput' name='searchInput' />
+    <button type="submit"> search </button>
+  </form>
+  <table>
+    <thead>
+      <tr>
+        <td>name</td>
+        <td>city</td>
+        <td>age</td>
+      </tr>
+    </thead>
+    <tbody>
+
+    </tbody>
+  </table>
+  <script>
+    //immitates costumers table response from server, for now
+    let itemsList = [
+      {
+        id: "id123",
+        name: "omer zauber",
+        city: "rehovot",
+        age: "37",
+      },
+      {
+        id: "id124",
+        name: "gidi",
+        city: "rosh ha'ain",
+        age: "31",
+      },
+      {
+        id: "id125",
+        name: "the emperor of mankind",
+        city: "terra",
+        age: "10000",
+      },
+    ];
+    const searchParams = new URLSearchParams(window.location.search);
+    const searchQuery = searchParams.get('searchInput');
+    document.getElementById('searchInput').value = searchQuery;
+    const serverUrl = new URL("http://localhost:5000");
+
+    function render_list() {
+      //reset list to be empty
+      document.querySelector("tbody").innerHTML = "";
+
+      //go over the saved list and render it
+      itemsList.map(customer => {
+      if (!searchQuery || customer.name.includes(searchQuery) || customer.city.includes(searchQuery) || customer.age.includes(searchQuery)) return customer;
+    }).forEach(customer => {
+      if (!customer) return;
+      
+        const row = document.createElement("tr");
+
+        const cell1 = document.createElement("td");
+        cell1.textContent = customer.name;
+        row.appendChild(cell1);
+
+        const cell2 = document.createElement("td");
+        cell2.textContent = customer.city;
+        row.appendChild(cell2);
+
+        const cell3 = document.createElement("td");
+        cell3.textContent = customer.age;
+        row.appendChild(cell3);
+
+        const cell5 = document.createElement("td");
+        cell5.innerHTML = ` <button type="button" onclick="delete_costumers('${customer.id}')">Remove costumer</button>`;
+        row.appendChild(cell5);
+
+        document.querySelector("tbody").appendChild(row);
+      });
+    }
+
+    //deletes a costumer from the db and then updates the list
+    async function delete_costumers(costumer_id) {
+      try {
+        alert('the costumer id: ${costumer_id} will be removed');
+
+        //go over all the costumers in the list
+        for (let i = 0; i < itemsList.length; i++) {
+          let currentcostumer = itemsList[i];
+          if (currentcostumer.id == costumer_id) {
+
+            //build request string to send to server
+            let requestString = serverUrl + '/delete?' + new URLSearchParams({
+              id: costumer_id,
+              callType: "costumers"
+            })
+
+            //send the request to the server
+            let response = await fetch(requestString, {
+              credentials: 'include'
+            })
+            console.log(response);
+
+            //if successfull -> remove the costumer from the list
+            itemsList.splice(i, 1)
+            continue;
+          }
+        }
+
+        render_list();
+
+      } catch (err) {
+        console.log(err);
+        alert(err);
+      }
+    }
+
+    //adds a costumer to the db and then updates the list
+    async function submit_costumer() {
+      try {
+
+        //save dom elements of the inputs
+        let costumerName = document.getElementById("name");
+        let costumerCity = document.getElementById("city");
+        let costumerAge = document.getElementById("age");
+
+        //save the values of the inputs
+        let costumerNameValue = costumerName.value;
+        let costumerCityValue = costumerCity.value;
+        let costumerAgeValue = costumerAge.value;
+
+        //exists function if missing input
+        if (!costumerNameValue || !costumerCityValue || !costumerAgeValue ) return;
+
+        //build request string to send to server
+        let requestString = serverUrl + '/add?' + new URLSearchParams({
+          name: costumerNameValue,
+          city: costumerCityValue,
+          age: costumerAgeValue,
+          callType: "costumers"
+        })
+
+        //send the request to the server
+        let response = await fetch(requestString, {
+          credentials: 'include'
+        })
+        console.log(response);
+
+        //if successfull -> add the costumer to the list on the screen
+        itemsList.push({
+          id: Math.random(),
+          name: costumerNameValue,
+          city: costumerCityValue,
+          age: costumerAgeValue
+        })
+
+        //reset the values
+        costumerName.value = "";
+        costumerCity.value = "";
+        costumerAge.value = "";
+
+        render_list();
+
+      } catch (err) {
+        console.log(err);
+        alert(err);
+      }
+    }
+
+    //retrieves the costumers from the db and updates the list
+    async function get_costumers() {
+      try {
+
+        //build request string to send to server
+        let requestString = serverUrl + '/getAll?' + new URLSearchParams({
+          callType: "costumers"
+        })
+
+        //send the request to the server
+        let response = await fetch(requestString, {
+          credentials: 'include'
+        })
+        console.log(response);
+
+        //if successfull -> add the costumer to the list on the screen
+        if (response) itemsList = response;
+
+        render_list();
+
+      } catch (err) {
+        console.log(err);
+        alert(err);
+      }
+    }
+
+    get_costumers();
+
+
+  </script>
+
+</body>
+
+</html>
