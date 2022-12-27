@@ -1,5 +1,13 @@
+from flask import Flask
+from flask_cors import CORS, cross_origin
 import entityHandler
 import messageHandler   
+
+
+app = Flask(__name__)
+cors = CORS(app)
+app.config['CORS_HEADERS'] = 'Content-Type'
+@app.route('/DB')
 
 # function which connects the SQL controler with the flask messageHandler
 def messageCallback(type,action, data):
@@ -14,11 +22,13 @@ def messageCallback(type,action, data):
         result = entity_handler.update(type,data)
     elif action == 'delete' : 
         result = entity_handler.delete(type,data)
-    return result
+    print ('result', result)
+    return result 
+
 
 # init of the handler classes
 entity_handler = entityHandler.entityHandler()
-message_handler = messageHandler.messageHandler(messageCallback)
+message_handler = messageHandler.messageHandler(messageCallback,app,cross_origin)
 
 # create the 3 required tables
 # TODO check if the tabels are already created

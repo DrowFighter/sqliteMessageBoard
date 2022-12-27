@@ -23,8 +23,7 @@
     <input type="text" id="city" name="city" /><br />
     <label for="age">age:</label><br />
     <input type="number" id="age" name="age" /><br />
-    <input type="submit" value="Submit" />
-    <input id type="submit" value="Submit" onclick="submit_costumer()" />
+    <input id type="submit" value="Submit" onclick="submit_customer()" />
 
   </div>
   <hr>
@@ -46,7 +45,7 @@
     </tbody>
   </table>
   <script>
-    //immitates costumers table response from server, for now
+    //immitates customers table response from server, for now
     let itemsList = [
       {
         id: "id123",
@@ -97,27 +96,27 @@
         row.appendChild(cell3);
 
         const cell5 = document.createElement("td");
-        cell5.innerHTML = ` <button type="button" onclick="delete_costumers('${customer.id}')">Remove costumer</button>`;
+        cell5.innerHTML = ` <button type="button" onclick="delete_customers('${customer.id}')">Remove customer</button>`;
         row.appendChild(cell5);
 
         document.querySelector("tbody").appendChild(row);
       });
     }
 
-    //deletes a costumer from the db and then updates the list
-    async function delete_costumers(costumer_id) {
+    //deletes a customer from the db and then updates the list
+    async function delete_customers(customer_id) {
       try {
-        alert('the costumer id: ${costumer_id} will be removed');
+        alert('the customer id: ${customer_id} will be removed');
 
-        //go over all the costumers in the list
+        //go over all the customers in the list
         for (let i = 0; i < itemsList.length; i++) {
-          let currentcostumer = itemsList[i];
-          if (currentcostumer.id == costumer_id) {
+          let currentcustomer = itemsList[i];
+          if (currentcustomer.id == customer_id) {
 
             //build request string to send to server
             let requestString = serverUrl + '/delete?' + new URLSearchParams({
-              id: costumer_id,
-              callType: "costumers"
+              id: customer_id,
+              callType: "customers"
             })
 
             //send the request to the server
@@ -126,7 +125,7 @@
             })
             console.log(response);
 
-            //if successfull -> remove the costumer from the list
+            //if successfull -> remove the customer from the list
             itemsList.splice(i, 1)
             continue;
           }
@@ -140,29 +139,29 @@
       }
     }
 
-    //adds a costumer to the db and then updates the list
-    async function submit_costumer() {
+    //adds a customer to the db and then updates the list
+    async function submit_customer() {
       try {
 
         //save dom elements of the inputs
-        let costumerName = document.getElementById("name");
-        let costumerCity = document.getElementById("city");
-        let costumerAge = document.getElementById("age");
+        let customerName = document.getElementById("name");
+        let customerCity = document.getElementById("city");
+        let customerAge = document.getElementById("age");
 
         //save the values of the inputs
-        let costumerNameValue = costumerName.value;
-        let costumerCityValue = costumerCity.value;
-        let costumerAgeValue = costumerAge.value;
+        let customerNameValue = customerName.value;
+        let customerCityValue = customerCity.value;
+        let customerAgeValue = customerAge.value;
 
         //exists function if missing input
-        if (!costumerNameValue || !costumerCityValue || !costumerAgeValue ) return;
+        if (!customerNameValue || !customerCityValue || !customerAgeValue ) return;
 
         //build request string to send to server
         let requestString = serverUrl + '/add?' + new URLSearchParams({
-          name: costumerNameValue,
-          city: costumerCityValue,
-          age: costumerAgeValue,
-          callType: "costumers"
+          name: customerNameValue,
+          city: customerCityValue,
+          age: customerAgeValue,
+          callType: "customers"
         })
 
         //send the request to the server
@@ -171,18 +170,18 @@
         })
         console.log(response);
 
-        //if successfull -> add the costumer to the list on the screen
+        //if successfull -> add the customer to the list on the screen
         itemsList.push({
           id: Math.random(),
-          name: costumerNameValue,
-          city: costumerCityValue,
-          age: costumerAgeValue
+          name: customerNameValue,
+          city: customerCityValue,
+          age: customerAgeValue
         })
 
         //reset the values
-        costumerName.value = "";
-        costumerCity.value = "";
-        costumerAge.value = "";
+        customerName.value = "";
+        customerCity.value = "";
+        customerAge.value = "";
 
         render_list();
 
@@ -192,13 +191,13 @@
       }
     }
 
-    //retrieves the costumers from the db and updates the list
-    async function get_costumers() {
+    //retrieves the customers from the db and updates the list
+    async function get_customers() {
       try {
 
         //build request string to send to server
         let requestString = serverUrl + '/getAll?' + new URLSearchParams({
-          callType: "costumers"
+          callType: "customers"
         })
 
         //send the request to the server
@@ -207,7 +206,7 @@
         })
         console.log(response);
 
-        //if successfull -> add the costumer to the list on the screen
+        //if successfull -> add the customer to the list on the screen
         if (response) itemsList = response;
 
         render_list();
@@ -218,7 +217,7 @@
       }
     }
 
-    get_costumers();
+    get_customers();
 
 
   </script>

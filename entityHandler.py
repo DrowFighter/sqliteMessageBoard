@@ -11,23 +11,25 @@ class entityHandler:
         try:
             
             # Connect to DB and create a cursor
-            self.sqliteConnection = sqlite3.connect(dbname)
+            self.sqliteConnection = sqlite3.connect(dbname, check_same_thread=False)
             self.cursor = self.sqliteConnection.cursor()
             print('DB Init')
         # Handle errors
         except sqlite3.Error as error:
             print('Error occured - ', error)
     
-    def build_table(self, type, data):
+    def build_table(self, type):
         result = None 
         query_string=""
         if type == "books" : 
-            query_string=books.build_table(data)
+            query_string=books.build_table()
         elif type == "customers" : 
-            query_string=customers.build_table(data)
+            query_string=customers.build_table()
         elif type == "loans" : 
-            query_string=loans.build_table(data)
-        if query_string != "" :result = self.cursor.execute(query_string)
+            query_string=loans.build_table()
+        if query_string != "" :
+            self.cursor.execute(query_string)
+        result = self.cursor.fetchall()
         return  result
 
     def create(self, type, data):
@@ -39,7 +41,10 @@ class entityHandler:
             query_string=customers.create(data)
         elif type == "loans" : 
             query_string=loans.create(data)
-        if query_string != "" : result = self.cursor.execute(query_string)
+        print(query_string)
+        if query_string != "" :
+            self.cursor.execute(query_string)
+        result = self.cursor.fetchall()
         return  result
 
     def get(self, type, data):
@@ -51,19 +56,24 @@ class entityHandler:
             query_string=customers.get(data)
         elif type == "loans" : 
             query_string=loans.get(data)
-        if query_string != "" : result = self.cursor.execute(query_string)
+        if query_string != "" :
+            self.cursor.execute(query_string)
+        result = self.cursor.fetchall()
         return   result
 
     def getAll(self, type, data):
         result = None
         query_string=""
         if type == "books" : 
-            query_string=books.getAll(data)
+            query_string=books.getAll()
         elif type == "customers" : 
-            query_string=customers.getAll(data)
+            query_string=customers.getAll()
         elif type == "loans" : 
-            query_string=loans.getAll(data)
-        if query_string != "" : result = self.cursor.execute(query_string)
+            query_string=loans.getAll()
+        if query_string != "" :
+            self.cursor.execute(query_string)
+        result = self.cursor.fetchall()
+        print ('getall',query_string, result, type)
         return   result
 
     def update(self, type, data):
@@ -75,7 +85,9 @@ class entityHandler:
             query_string=customers.update(data)
         elif type == "loans" : 
             query_string=loans.update(data)
-        if query_string != "" : result = self.cursor.execute(query_string)
+        if query_string != "" :
+            self.cursor.execute(query_string)
+        result = self.cursor.fetchall()
         return   result
 
     def delete(self, type, data):
@@ -87,6 +99,8 @@ class entityHandler:
             query_string=customers.delete(data)
         elif type == "loans" : 
             query_string=loans.delete(data)
-        if query_string != "" : result = self.cursor.execute(query_string)
+        if query_string != "" :
+            self.cursor.execute(query_string)
+        result = self.cursor.fetchall()
         return     result      
 
